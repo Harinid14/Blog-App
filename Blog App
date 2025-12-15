@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Blog App</title>
+    <style>
+        :root {
+            --light-blue: #ADD8E6;
+            --dark-blue: #007ACC;
+            --dark-red: #7A2D48;
+            --off-white: #F4F4F9;
+            --text-dark: #333;
+            --text-gray: #666;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--light-blue);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+        }
+
+        h1 {
+            color: var(--dark-blue);
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid var(--off-white);
+            padding-bottom: 10px;
+        }
+        #create-post-section {
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: var(--off-white);
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 1em;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .primary-btn {
+            background-color: var(--dark-blue);
+        }
+
+        .primary-btn:hover {
+            background-color: #005A99;
+        }
+        #posts-list {
+            margin-top: 20px;
+            padding-top: 10px;
+        }
+
+        .post-card {
+            background-color: white;
+            border: 1px solid #ccc;
+            border-left: 5px solid var(--dark-blue);
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .post-card h2 {
+            margin-top: 0;
+            color: var(--dark-blue);
+            font-size: 1.4em;
+            margin-bottom: 5px;
+        }
+
+        .post-card p {
+            color: var(--text-dark);
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+        }
+
+        .delete-btn {
+            background-color: var(--dark-red);
+            float: right;
+            padding: 5px 10px;
+        }
+
+        .delete-btn:hover {
+            background-color: #5d2235;
+        }
+
+        .post-meta {
+            font-size: 0.85em;
+            color: var(--text-gray);
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Simple Local Blog</h1>
+
+        <div id="create-post-section">
+            <h2>✍️ Create New Post</h2>
+            <input type="text" id="post-title" placeholder="Enter post title" required>
+            <textarea id="post-content" placeholder="Write your post content here..." required></textarea>
+            <button class="primary-btn" onclick="addPost()">Publish Post</button>
+        </div>
+
+        <div id="view-posts-section">
+            <h2>📜 Blog Posts</h2>
+            <div id="posts-list">
+                </div>
+            <p id="no-posts-message" style="text-align: center; color: var(--text-gray);">
+                No posts found. Create one above!
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'blogPosts';
+        const postsListElement = document.getElementById('posts-list');
+        const noPostsMessage = document.getElementById('no-posts-message');
+        function getPosts() {
+            const postsJson = localStorage.getItem(STORAGE_KEY);
+            return postsJson ? JSON.parse(postsJson) : [];
+        }
+        function savePosts(posts) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+        }
+        function addPost() {
+            const titleInput = document.getElementById('post-title');
+            const contentInput = document.getElementById('post-content');
+
+            const title = titleInput.value.trim();
+            const content = contentInput.value.trim();
+
+            if (!title || !content) {
+                alert('Please enter both a title and content for your post.');
+                return;
+            }
+
+            const posts = getPosts();
+            const newPost = {
+                id: Date.now(),
+                title: title,
+                content: content,
+                date: new Date().toLocaleDateString()
+            };
+
+            posts.unshift(newPost);
+            savePosts(posts);
+            titleInput.value = '';
+            contentInput.value = '';
+            displayPosts();
+        }
+        function displayPosts() {
+            const posts = getPosts();
+            postsListElement.innerHTML = ''; 
+
+            if (posts.length === 0) {
+                noPostsMessage.style.display = 'block';
+                return;
+            }
+            noPostsMessage.style.display = 'none';
+
+            posts.forEach(post => {
+                const postCard = document.createElement('div');
+                postCard.className = 'post-card';
+                
+                const deleteButton = `<button class="delete-btn" onclick="deletePost(${post.id})">Delete</button>`;
+
+                postCard.innerHTML = `
+                    ${deleteButton}
+                    <h2>${post.title}</h2>
+                    <p>${post.content}</p>
+                    <div class="post-meta">Published on: ${post.date}</div>
+                `;
+                
+                postsListElement.appendChild(postCard);
+            });
+        }
+        function deletePost(idToDelete) {
+            if (!confirm("Are you sure you want to delete this post?")) {
+                return;
+            }
+            
+            let posts = getPosts();
+            posts = posts.filter(post => post.id !== idToDelete);
+            
+            savePosts(posts);
+            displayPosts(); 
+        }
+        window.onload = displayPosts;
+
+    </script>
+
+</body>
+</html>
